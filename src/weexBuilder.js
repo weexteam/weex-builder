@@ -14,9 +14,9 @@ class WeexBuilder extends WebpackBuilder {
       options.ext = defaultExt.join('|');
     }
 
-    super(source, dest, options);
+    super(source, dest, 'webpack.config.js', options);
   }
-  initConfig () {
+  initConfig (callback) {
     const destExt = path.extname(this.dest);
     const sourceExt = path.extname(this.sourceDef);
     let dir;
@@ -164,7 +164,38 @@ class WeexBuilder extends WebpackBuilder {
       }
       return configs;
     };
-    this.config = webpackConfig();
+
+    if (this.options.externalWebpack) {
+      const externalWebpack = require(this.webpackExtConfigPath);
+
+      this.processWebpackConfig(externalWebpack, (config) => {
+        this.config = config;
+        console.log(JSON.stringify(config));
+        callback();
+      });
+    }
+    else {
+      this.config = webpackConfig();
+      callback();
+    }
   }
+
+  processWebpackConfig (config, callback) {
+    if (typeof config === 'function') {
+      // process Function
+      this.processWebpackConfig(config(process.env), callback);
+    }
+    else	if (typeof config.then === 'function') {
+      // process Promise
+      config.then((conf) => {
+        this.processWebpackConfig(conf, callback)
+      });
+    }
+    else if (typeof config === 'object') {
+      // process Object
+      callback(config);
+      return config;
+    }
+  } 
 }
 module.exports = WeexBuilder;
