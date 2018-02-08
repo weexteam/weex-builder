@@ -38,8 +38,12 @@ program.version(require('../package.json').version)
         }, function (err, output, json) {
             gauge.hide()
             if (err) {
-                console.log(chalk.red('Build Failed!'))
-                err.forEach(e => console.error(e))
+                console.log(chalk.red('Build Failed!'));
+                if(typeof err.forEach === 'function'){
+                    err.forEach(e => console.error(e));
+                }else{
+                    console.log(JSON.stringify(err));
+                }
             }
             else {
                 console.log('Build completed!\nChild')

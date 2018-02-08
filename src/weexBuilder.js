@@ -66,7 +66,7 @@ class WeexBuilder extends WebpackBuilder {
         sourceMap: !!this.options.devtool
       }));
     }
-    const webpackConfig = () => {
+    const webpackConfig = (webpackCb) => {
       const entrys = {};
       this.source.forEach(s => {
         let file = path.relative(path.resolve(this.base), s);
@@ -76,7 +76,35 @@ class WeexBuilder extends WebpackBuilder {
         }
         entrys[file] = s;
       });
-      const configs = {
+
+      this.getDefaultConfig(entrys, dir, filename, plugins, (conf) => {
+        webpackCb(conf);
+      });
+    };
+
+    webpackConfig(conf => {
+      this.config = conf;
+      callback();
+    });
+  }
+
+  getDefaultConfig (entrys, dir, filename, plugins, callback) {
+    if (this.options.externalWebpack) {
+      const externalWebpack = require(this.webpackExtConfigPath);
+      this.processWebpackConfig(externalWebpack, (conf) => {
+        conf.entry = entrys;
+        conf.output = {
+          path: dir,
+          filename: filename
+        };
+        conf.watch = this.options.watch || false;
+        conf.devtool = this.options.devtool || false;
+        conf.plugins = plugins;
+        callback(conf);
+      });
+    }
+    else {
+      const conf = {
         entry: entrys,
         output: {
           path: dir,
@@ -124,8 +152,9 @@ class WeexBuilder extends WebpackBuilder {
         */
         plugins: plugins
       };
+
       if (this.options.web) {
-        configs.module.rules.push({
+        conf.module.rules.push({
           test: /\.vue(\?[^?]+)?$/,
           use: [{
             loader: 'vue-loader',
@@ -146,14 +175,14 @@ class WeexBuilder extends WebpackBuilder {
         });
       }
       else {
-        configs.module.rules.push({
+        conf.module.rules.push({
           test: /\.vue(\?[^?]+)?$/,
           use: [{
             loader: 'weex-loader',
             options: vueLoaderConfig({ useVue: false })
           }]
         });
-        configs.node = {
+        conf.node = {
           setImmediate: false,
           dgram: 'empty',
           fs: 'empty',
@@ -162,21 +191,8 @@ class WeexBuilder extends WebpackBuilder {
           child_process: 'empty'
         };
       }
-      return configs;
-    };
 
-    if (this.options.externalWebpack) {
-      const externalWebpack = require(this.webpackExtConfigPath);
-
-      this.processWebpackConfig(externalWebpack, (config) => {
-        this.config = config;
-        console.log(JSON.stringify(config));
-        callback();
-      });
-    }
-    else {
-      this.config = webpackConfig();
-      callback();
+      callback(conf);
     }
   }
 
@@ -196,6 +212,6 @@ class WeexBuilder extends WebpackBuilder {
       callback(config);
       return config;
     }
-  } 
+  }
 }
 module.exports = WeexBuilder;
