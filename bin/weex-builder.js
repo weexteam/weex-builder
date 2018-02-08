@@ -12,6 +12,7 @@ program.version(require('../package.json').version)
     .option('-w,--watch', 'watch files and rebuild')
     .option('-d,--devtool [devtool]', 'set webpack devtool mode')
     .option('-m,--min', 'compress the output js (will disable inline-source-map)')
+    .option('-x,--external-webpack', 'use webpack.config.js in project as webpack configuration file')
     .arguments('<source> <dest>')
     .action(function (source, dest) {
         showHelp = false
@@ -33,11 +34,16 @@ program.version(require('../package.json').version)
             ext: pathTool.extname(source) || program.ext || 'vue|we',
             web: !!program.web,
             min: !!program.min,
+            externalWebpack: !!program.externalWebpack
         }, function (err, output, json) {
             gauge.hide()
             if (err) {
-                console.log(chalk.red('Build Failed!'))
-                err.forEach(e => console.error(e))
+                console.log(chalk.red('Build Failed!'));
+                if(typeof err.forEach === 'function'){
+                    err.forEach(e => console.error(e));
+                }else{
+                    console.log(JSON.stringify(err));
+                }
             }
             else {
                 console.log('Build completed!\nChild')
