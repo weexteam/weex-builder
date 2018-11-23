@@ -50,7 +50,9 @@
     "babel-eslint": "^8.0.3",
     "chai": "^4.1.2",
     "eslint": "^4.13.1",
-    "mocha": "^4.0.1"
+    "mocha": "^4.0.1",
+    "vue": "^2.5.16",
+    "vue-template-compiler": "^2.5.16"
   },
   "changelog": {
     "messages": [
